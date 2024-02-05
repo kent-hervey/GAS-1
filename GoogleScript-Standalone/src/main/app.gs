@@ -10,6 +10,13 @@ function gatherUserInformation() {
     let currentTime = new Date();
     console.log("logging current time:  "  + currentTime);
 
+    let currentMonth = currentTime.getMonth()
+    let currentDate = currentTime.getDate()
+    let currentYear = currentTime.getFullYear()
+    let currentHour = currentTime.getHours()
+    let currentMinutes = currentTime.getMinutes()
+    let currentSeconds = currentTime.getSeconds()
+
     //display user's language
     // let language = Session.getActiveUser().getLanguage();
     // console.log(language);
@@ -17,6 +24,12 @@ function gatherUserInformation() {
     //display user's username
     let username = Session.getActiveUser().getUsername();
     console.log("logging username:  "  +  username);
+    //replace period in username with a hyphen
+    let usernameStripped = username.replace(/[^a-zA-Z0-9]/g, '');
+    console.log("logging usernameStripped:  "  + usernameStripped);
+
+    let fileName = usernameStripped + "-" + currentDate + "-" + currentYear + "-" + currentHour + "-" + currentMinutes + "-" + currentSeconds
+    console.log("logging fileName:  "  + fileName);
 
     //display location of this script
     let scriptId = ScriptApp.getScriptId();
