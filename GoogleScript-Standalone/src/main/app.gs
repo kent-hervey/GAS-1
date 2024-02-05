@@ -1,14 +1,14 @@
 function gatherUserInformation() {
     let email = Session.getActiveUser().getEmail();
-    console.log(email);
+    console.log("logging email: " + email);
 
     //display local time
     let timeZone = Session.getScriptTimeZone();
-    console.log(timeZone);
+    console.log("logging timezone:  "  + timeZone);
 
     //display current time
     let currentTime = new Date();
-    console.log(currentTime);
+    console.log("logging current time:  "  + currentTime);
 
     //display user's language
     // let language = Session.getActiveUser().getLanguage();
@@ -16,7 +16,7 @@ function gatherUserInformation() {
 
     //display user's username
     let username = Session.getActiveUser().getUsername();
-    console.log(username);
+    console.log("logging username:  "  +  username);
 
     //display location of this script
     let scriptId = ScriptApp.getScriptId();
@@ -24,7 +24,7 @@ function gatherUserInformation() {
     let folders = file.getParents();
     while (folders.hasNext()) {
         let folder = folders.next();
-        console.log(folder.getName());
+        console.log("logging folder.getName:  " + folder.getName());
     }
 
     //create a new folder named "GAS Gerated Files" inside of folder with id of 1OWh3ZgM7_-KrMyvW_D2dZJz-hUVwCzWR, but only if it doesn't already exist
@@ -43,7 +43,7 @@ function gatherUserInformation() {
 
     //Note that folder parentFolder also has folder in it named "GAS Source Files" which will house the source files for the project such as spreadhseet and pdf files
     let sourceFolder = parentFolder.getFoldersByName('GAS Source Files').next();
-    console.log(sourceFolder.getName());
+    console.log("logging sourceFolder.getName:  "  + sourceFolder.getName());
 
     //display contents of sourceFolder
     let files = sourceFolder.getFiles();
@@ -78,7 +78,7 @@ function gatherUserInformation() {
     // displayEmail();
 
 
-
+console.log("this is a test2");
 
 
 }
