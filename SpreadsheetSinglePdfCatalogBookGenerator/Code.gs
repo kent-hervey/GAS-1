@@ -54,11 +54,21 @@ async function mergePDFsToBook() {
         .filter(value => value !== undefined)  // Filter out any undefined values in array
         .sort((a, b) => a.orderNumberFromColumn - b.orderNumberFromColumn);  // Sort array by order number (least to greatest)
 
+    // if orderAndFileLocation is empty, then there are no pdfs to merge
+    if (orderAndFileLocation.length === 0) {
+        console.log("No PDFs to merge");
+        // do an alert to user that there are no pdfs to merge
+        alertMessage("No PDFs to merge:  Your pdf will be blank)");
+        return;
+    }
+
     /* below transforms the orderAndFileLocation array into an array of Uint8Array objects, each representing the
     // binary content of the corresponding PDF file. This array can then be used further for
     processing or saving the PDF files.
     */
+
     let data = orderAndFileLocation
+        .filter(value => value?.pdfFileNameFromColumn)
         .map(value => new Uint8Array(folderofSourcePdfs.getFilesByName(value.pdfFileNameFromColumn).next().getBlob().getBytes()));
 
     const pdfDoc = await PDFLib.PDFDocument.create(); // creates an empty PDF file (initially without content)
@@ -71,7 +81,7 @@ async function mergePDFsToBook() {
 
     const bytes = await pdfDoc.save(); // Save the final merged PDF content
 
-    const blob = Utilities.newBlob([... new Int8Array(bytes)], MimeType.PDF, createSerialFileName());
+    const blob = Utilities.newBlob([...new Int8Array(bytes)], MimeType.PDF, createSerialFileName());
     /*
     Utilities.newBlob(...) is a Google Apps Script utility function that constructs a Blob object.
     Agruments are content, contentType, and name.
@@ -89,18 +99,18 @@ async function mergePDFsToBook() {
     outputFolder.createFile(blob);
 }
 
-function createSerialFileName(){
+function createSerialFileName() {
 
     //display current time
     let currentTime = new Date();
-    console.log("logging current time:  "  + currentTime);
+    console.log("logging current time:  " + currentTime);
 
-    let currentMonth = currentTime.getMonth()+1
-    let currentDate = currentTime.getDate()
-    let currentYear = currentTime.getFullYear()
-    let currentHour = currentTime.getHours()
-    let currentMinutes = currentTime.getMinutes()
-    let currentSeconds = currentTime.getSeconds()
+    let currentMonth = currentTime.getMonth() + 1;
+    let currentDate = currentTime.getDate();
+    let currentYear = currentTime.getFullYear();
+    let currentHour = currentTime.getHours();
+    let currentMinutes = currentTime.getMinutes();
+    let currentSeconds = currentTime.getSeconds();
 
     //display user's language
     // let language = Session.getActiveUser().getLanguage();
@@ -108,26 +118,26 @@ function createSerialFileName(){
 
     //display user's username
     let username = Session.getActiveUser().getUsername();
-    console.log("logging username:  "  +  username);
+    console.log("logging username:  " + username);
     //replace period in username with a hyphen
     let usernameStripped = username.replace(/[^a-zA-Z0-9]/g, '');
-    console.log("logging usernameStripped:  "  + usernameStripped);
+    console.log("logging usernameStripped:  " + usernameStripped);
 
-    return usernameStripped + " " + currentMonth + "-" + currentDate + "-" + currentYear + "-" + currentHour + "-" + currentMinutes + "-" + currentSeconds + ".pdf"
+    return usernameStripped + " " + currentMonth + "-" + currentDate + "-" + currentYear + "-" + currentHour + "-" + currentMinutes + "-" + currentSeconds + ".pdf";
 }
 
-function alertMessage() {
-    var result = SpreadsheetApp.getUi().alert("Alert message");
-    if(result === SpreadsheetApp.getUi().Button.OK) {
+function alertMessage(message) {
+    var result = SpreadsheetApp.getUi().alert(message);
+    if (result === SpreadsheetApp.getUi().Button.OK) {
         //Take some action
-        SpreadsheetApp.getActive().toast("About to take some action …");
+        //SpreadsheetApp.getActive().toast("About to take some action …");
     }
 }
 
 function sendEmailFunction(fileBlob) {
 //this function was confirmed on 2/11/24 to work
 
-    var noBlob= fileBlob; //to satisfy compiler that fileBlob is used
+    var noBlob = fileBlob; //to satisfy compiler that fileBlob is used
 
     // let fileIdToSend = "1OGgtO2ZrcZBvhZIJYUljvBXtU7OYivoBCSQytQNnZBk"
     var file = DriveApp.getFileById("1OGgtO2ZrcZBvhZIJYUljvBXtU7OYivoBCSQytQNnZBk");
