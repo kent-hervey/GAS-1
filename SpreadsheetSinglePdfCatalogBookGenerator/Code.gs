@@ -1,38 +1,31 @@
-//This file used to develop good code for combining single page pdfs into a
+//This file used to develop code reference for combining single page pdfs into a
 //single pdf catalog book with a good file name and then possibly sending the file to an email address
 // storing the resulting pdf in a folder in google drive
 // order of pdf files is determined by the order indicated in the host spreadsheet of this script
 
+/* Possible future features
 
-//File names can be FNameLname-MM/DD/YYYY-HH/MM/SS
+1.  Send the resulting pdf to an email address--particularly the email address of the person who requested the pdf
+2.  Log requests for pdf books in a spreadsheet
 
-//Whenever a file is created, need to log that to a spreadsheet for Leadership use showing which case studies were booked, and what order, and who requested
+*/
 
+/* Currently:
+    File names are fnameLastname Month-Day-Year-Hour-Minute-Second.pdf
+    GAS code is housed in a Google Sheet and is triggered by a button in the sheet
+    The resulting pdf is stored in a folder in Google Drive
+    The order of the pdf files is determined by the order indicated in the host spreadsheet of this script
+    Application depends on these:
+        1. Spreadsheet has a table with a range name that has the following columns:  "File Name", "Ordering".
+            The header names of the rows are not required to be any specific name
+            Rather the proper column indexes of those columns must be specified in the code assigned to the constants:
+            PDF_Input_File_NAME_COLUMN_INDEX and CASE_STUDY_ORDERING_COLUMN_INDEX
+        2. The folder with the source pdfs has the same name as the folder with the source pdfs in the host script
 
-
-
-// function mergePDFs() {
-//   // Get the folder ID containing the PDFs
-//   var folderId = "1USbLrg8NC5BHrVq0nk8rwL4goZ3wiCae";  // Replace with your actual folder ID
-//   var folder = DriveApp.getFolderById(folderId);
-
-//   // Get the sheet containing the list of PDFs and their order
-//   var sheet = SpreadsheetApp.getActiveSheet();
-
-//   // Create an empty PDF file (initially without content)
-//   var mergedPDF = DriveApp.createFile(Utilities.newBlob("", "application/pdf"), "Merged PDF.pdf");
-
-//   // Access the newly created PDF's content as a PdfDocument
-//   var pdfContent = mergedPDF.getBlob().getDataAsString();
-//   var pdfDoc = PdfService.createPdf(pdfContent);
-
-//   // ... (Code to merge PDFs into the pdfDoc object using PdfService methods) ...
-
-//   // Save the final merged PDF content
-//   mergedPDF.setContent(pdfDoc.getAs(MimeType.PDF));
-// }
+*/
 
 async function mergePDFsToBook() {
+
     //uses pdf library as explained here:
     // https://stackoverflow.com/questions/67682461/how-to-merge-multiple-pdf-files-into-one-pdf-file-in-google-apps-script
     // and here: https://www.jsdelivr.com/package/npm/pdf-lib
@@ -40,40 +33,33 @@ async function mergePDFsToBook() {
     const cdnjs = "https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js";
     eval(UrlFetchApp.fetch(cdnjs).getContentText().replace(/setTimeout\(.*?,.*?(\d*?)\)/g, "Utilities.sleep($1);return t();"));
 
-
     //Set constants for the project
-    const CASE_STUDY_ORDERING_COLUMN_INDEX = 3;
-    const PDF_Input_File_NAME_COLUMN_INDEX = 1; //these are the file names
+    const CASE_STUDY_ORDERING_COLUMN_INDEX = 3; //these are the order numbers of the case studies
+    const PDF_INPUT_FILE_NAME_COLUMN_INDEX = 1; //these are the file names of the case studies
 
-    const folderIdSourcePdfs = "1hdvC1S1zsGsu7yLnnlPXXTuoXiCtjfOn";  // Replace with your actual folder ID
-    const folderofSourcePdfs = DriveApp.getFolderById(folderIdSourcePdfs);
+    const FOLDER_ID_SOURCE_PDFS = "1hdvC1S1zsGsu7yLnnlPXXTuoXiCtjfOn";  // Replace with your actual folder ID
+    const folderofSourcePdfs = DriveApp.getFolderById(FOLDER_ID_SOURCE_PDFS);
 
-    const outputFolderId = "1jKPSmqbRtRXfZPLn-4QQbBVpGC7WhGJ7";  // Replace with your actual folder ID
-    const outputFolder = DriveApp.getFolderById(outputFolderId);
-
-    // const rangeByNamePdfTable = SpreadsheetApp.getActive().getRangeByName("pdfSourceTable");
-    // var values = rangeByNamePdfTable.getValues();
-
-    //var rowAndColumnValuesinTable = SpreadsheetApp.getActive().getRangeByName("pdfSourceTable").getValues();
+    const OUTPUT_FOLDER_ID = "1jKPSmqbRtRXfZPLn-4QQbBVpGC7WhGJ7";  // Replace with your actual folder ID
+    const outputFolder = DriveApp.getFolderById(OUTPUT_FOLDER_ID);
 
     const orderAndFileLocation = SpreadsheetApp.getActive().getRangeByName("pdfSourceTable").getValues()
-        .map(study => {
-            if (Number.isInteger(study[CASE_STUDY_ORDERING_COLUMN_INDEX]))
+        .map(col => {
+            if (Number.isInteger(col[CASE_STUDY_ORDERING_COLUMN_INDEX]))
                 return {
-                    orderNumber: study[CASE_STUDY_ORDERING_COLUMN_INDEX],
-                    pdfFileName: study[PDF_Input_File_NAME_COLUMN_INDEX]
+                    orderNumberFromColumn: col[CASE_STUDY_ORDERING_COLUMN_INDEX],
+                    pdfFileNameFromColumn: col[PDF_INPUT_FILE_NAME_COLUMN_INDEX]
                 }
         })
-        .filter(value => value != undefined)  // Filter out any undefined values in array
-
-        .sort((a, b) => a.orderNumber - b.orderNumber);  // Sort array by order number (least to greatest)
+        .filter(value => value !== undefined)  // Filter out any undefined values in array
+        .sort((a, b) => a.orderNumberFromColumn - b.orderNumberFromColumn);  // Sort array by order number (least to greatest)
 
     /* below transforms the orderAndFileLocation array into an array of Uint8Array objects, each representing the
     // binary content of the corresponding PDF file. This array can then be used further for
     processing or saving the PDF files.
     */
     let data = orderAndFileLocation
-        .map(value => new Uint8Array(folderofSourcePdfs.getFilesByName(value.pdfFileName).next().getBlob().getBytes()));
+        .map(value => new Uint8Array(folderofSourcePdfs.getFilesByName(value.pdfFileNameFromColumn).next().getBlob().getBytes()));
 
     const pdfDoc = await PDFLib.PDFDocument.create(); // creates an empty PDF file (initially without content)
 
@@ -98,7 +84,7 @@ async function mergePDFsToBook() {
     from a function called createSerialFileName()
      */
 
-    //sendEmailFunction(blob)
+    //sendEmailFunction(blob) //future feature
 
     outputFolder.createFile(blob);
 }
@@ -128,8 +114,6 @@ function createSerialFileName(){
     console.log("logging usernameStripped:  "  + usernameStripped);
 
     return usernameStripped + " " + currentMonth + "-" + currentDate + "-" + currentYear + "-" + currentHour + "-" + currentMinutes + "-" + currentSeconds + ".pdf"
-
-
 }
 
 function alertMessage() {
@@ -143,16 +127,16 @@ function alertMessage() {
 function sendEmailFunction(fileBlob) {
 //this function was confirmed on 2/11/24 to work
 
-    let fileIdToSend = "1OGgtO2ZrcZBvhZIJYUljvBXtU7OYivoBCSQytQNnZBk"
+    var noBlob= fileBlob; //to satisfy compiler that fileBlob is used
 
+    // let fileIdToSend = "1OGgtO2ZrcZBvhZIJYUljvBXtU7OYivoBCSQytQNnZBk"
     var file = DriveApp.getFileById("1OGgtO2ZrcZBvhZIJYUljvBXtU7OYivoBCSQytQNnZBk");
     var blob = file.getBlob();
-    blob= fileBlob;
+
     let userUsersEmail = Session.getActiveUser().getEmail();
     const parts = userUsersEmail.split('@');
-
-    // Construct new email with tester
-    const emailWithAlias = [parts[0], '+GAS-Test', '@', domain].join('');
+    //const emailWithAlias = [parts[0], '+GAS-Test', '@', + parts[1]].join('');
+    const emailWithAlias = (parts[0] + 'GAS-Test@' + parts[1]);
 
     MailApp.sendEmail({
         to: emailWithAlias,
