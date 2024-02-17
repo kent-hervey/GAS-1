@@ -58,7 +58,7 @@ async function mergePDFsToBook() {
     if (orderAndFileLocation.length === 0) {
         console.log("No PDFs to merge");
         // do an alert to user that there are no pdfs to merge
-        alertMessage("No PDFs to merge:  Your pdf will be blank)");
+        alertMessage("No PDFs to merge:  Your pdf would be blank, \nso it will not be created)");
         return;
     }
 
