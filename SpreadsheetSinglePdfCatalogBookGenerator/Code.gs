@@ -7,6 +7,7 @@
 
 1.  Send the resulting pdf to an email address--particularly the email address of the person who requested the pdf
 2.  Log requests for pdf books in a spreadsheet
+3.  Add a cover page to the pdf book
 
 */
 
@@ -20,11 +21,18 @@
             The header names of the rows are not required to be any specific name
             Rather the proper column indexes of those columns must be specified in the code assigned to the constants:
             PDF_Input_File_NAME_COLUMN_INDEX and CASE_STUDY_ORDERING_COLUMN_INDEX
-        2. The folder with the source pdfs has the same name as the folder with the source pdfs in the host script
 
 */
 
-async function mergePDFsToBook() {
+async function mergePDFsToBookWithEmail() {
+    mergePDFsToBook(true, false);
+}
+
+async function mergePDFsToBookWithEmailCoverPage() {
+    mergePDFsToBook(true, true);
+}
+
+async function mergePDFsToBook(isSendEmail = false, isCreatCoverPage = false) {
 
     //uses pdf library as explained here:
     // https://stackoverflow.com/questions/67682461/how-to-merge-multiple-pdf-files-into-one-pdf-file-in-google-apps-script
@@ -43,7 +51,16 @@ async function mergePDFsToBook() {
     const OUTPUT_FOLDER_ID = "1jKPSmqbRtRXfZPLn-4QQbBVpGC7WhGJ7";  // Replace with your actual folder ID
     const outputFolder = DriveApp.getFolderById(OUTPUT_FOLDER_ID);
 
-    const orderAndFileLocation = SpreadsheetApp.getActive().getRangeByName("pdfSourceTable").getValues()
+    const RANGE_NAME_LIST_PDF_FILES = "pdfSourceTable";
+
+    if(isCreatCoverPage){
+        //future feature
+        alertMessage("Cover page feature not yet implemented\n" +
+            "When implemented, the pdf will have a cover page\n" +
+            "For now, pdf will not have a cover page");
+    }
+
+    const orderAndFileLocation = SpreadsheetApp.getActive().getRangeByName(RANGE_NAME_LIST_PDF_FILES).getValues()
         .map(col => {
             if (Number.isInteger(col[CASE_STUDY_ORDERING_COLUMN_INDEX]))
                 return {
@@ -95,6 +112,12 @@ async function mergePDFsToBook() {
      */
 
     //sendEmailFunction(blob) //future feature
+    if(isSendEmail){
+        //sendEmailFunction(blob); //future feature
+        alertMessage("Email feature not yet implemented\n" +
+            "When implemented, user will receive email with the pdf attached\n" +
+            "For now, the pdf will not be sent to an email address");
+    }
 
     outputFolder.createFile(blob);
 }
